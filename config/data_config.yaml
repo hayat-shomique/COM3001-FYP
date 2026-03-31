@@ -1,0 +1,35 @@
+# COM3001 Backtesting Framework — Data Configuration
+# All data parameters in one place for reproducibility and auditability.
+
+source:
+  provider: "wrds_crsp"
+  table: "crsp.dsf"
+  names_table: "crsp.dsenames"
+  description: >
+    CRSP Daily Stock File via WRDS. Institutional-grade source with
+    split/dividend-adjusted returns and verified OHLCV data.
+
+asset:
+  ticker: "SPY"
+  permno: null                       # Resolved at runtime via crsp.dsenames lookup
+  description: "SPDR S&P 500 ETF Trust — broad US equity market proxy"
+
+period:
+  start_date: "2010-01-04"           # Post-GFC recovery — avoids crisis-era regime distortion
+  end_date: "2024-12-31"             # Most recent full calendar year in CRSP
+
+fields:
+  - date
+  - prc                              # Closing price (may be negative — CRSP bid/ask convention)
+  - openprc                          # Opening price
+  - askhi                            # Daily high
+  - bidlo                            # Daily low
+  - vol                              # Trading volume (shares)
+  - ret                              # Holding period return (split/dividend adjusted)
+
+output:
+  raw_path: "data/raw/spy_daily_raw.csv"
+
+reproducibility:
+  random_seed: 42
+  python_version: "3.11.9"
