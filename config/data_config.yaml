@@ -11,24 +11,31 @@ source:
 
 asset:
   ticker: "SPY"
-  permno: 84398                       # Resolved at runtime via crsp.dsenames lookup
+  permno: 84398
   description: "SPDR S&P 500 ETF Trust — broad US equity market proxy"
 
 period:
-  start_date: "2010-01-04"           # Post-GFC recovery — avoids crisis-era regime distortion
-  end_date: "2024-12-31"             # Most recent full calendar year in CRSP
+  start_date: "2010-01-04"
+  end_date: "2024-12-31"
 
 fields:
   - date
-  - prc                              # Closing price (may be negative — CRSP bid/ask convention)
-  - openprc                          # Opening price
-  - askhi                            # Daily high
-  - bidlo                            # Daily low
-  - vol                              # Trading volume (shares)
-  - ret                              # Holding period return (split/dividend adjusted)
+  - prc
+  - openprc
+  - askhi
+  - bidlo
+  - vol
+  - ret
 
 output:
   raw_path: "data/raw/spy_daily_raw.csv"
+
+preprocessing:
+  input_path: "data/raw/spy_daily_raw.csv"
+  output_path: "data/interim/spy_daily_clean.csv"
+  drop_if_null:
+    - close
+    - return
 
 reproducibility:
   random_seed: 42
