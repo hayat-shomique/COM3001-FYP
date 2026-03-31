@@ -47,3 +47,8 @@ target:
   type: "binary_direction"
   shift: 1
   description: "1 if next-day return > 0, else 0"
+
+features:
+  input_path: "data/processed/spy_targeted.csv"
+  output_path: "data/processed/spy_featured.csv"
+  description: "14 technical features across 6 categories, time-t-or-earlier only"
