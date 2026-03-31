@@ -11,7 +11,7 @@ source:
 
 asset:
   ticker: "SPY"
-  permno: null                       # Resolved at runtime via crsp.dsenames lookup
+  permno: 84398                       # Resolved at runtime via crsp.dsenames lookup
   description: "SPDR S&P 500 ETF Trust — broad US equity market proxy"
 
 period:
