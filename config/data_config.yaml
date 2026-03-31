@@ -40,3 +40,10 @@ preprocessing:
 reproducibility:
   random_seed: 42
   python_version: "3.11.9"
+
+target:
+  input_path: "data/interim/spy_daily_clean.csv"
+  output_path: "data/processed/spy_targeted.csv"
+  type: "binary_direction"
+  shift: 1
+  description: "1 if next-day return > 0, else 0"
