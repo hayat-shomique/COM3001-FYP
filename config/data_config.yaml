@@ -52,3 +52,10 @@ features:
   input_path: "data/processed/spy_targeted.csv"
   output_path: "data/processed/spy_featured.csv"
   description: "14 technical features across 6 categories, time-t-or-earlier only"
+
+splitting:
+  input_path: "data/processed/spy_featured.csv"
+  train_output_path: "data/processed/spy_train.csv"
+  test_output_path: "data/processed/spy_test.csv"
+  train_end_date: "2022-12-31"
+  description: "Strict chronological split — train up to 2022-12-31, test from first 2023 trading day"
