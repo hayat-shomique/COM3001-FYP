@@ -11,3 +11,4 @@ results/*
 .env
 .vscode/
 .claude/
+CLAUDE.md

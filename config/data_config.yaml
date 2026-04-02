@@ -59,3 +59,9 @@ splitting:
   test_output_path: "data/processed/spy_test.csv"
   train_end_date: "2022-12-31"
   description: "Strict chronological split — train up to 2022-12-31, test from first 2023 trading day"
+
+geobm:
+  train_path: "data/processed/spy_train.csv"
+  test_path: "data/processed/spy_test.csv"
+  predictions_path: "results/predictions/geobm_predictions.csv"
+  description: "Geometric Brownian Motion directional baseline — analytic one-step-ahead prediction"
