@@ -31,6 +31,8 @@ The appropriateness of GeoBM as a baseline in this comparative framework rests o
 
 2. **It is analytically transparent.** The prediction rule has a closed-form derivation. There are no hyperparameters to tune, no model selection decisions, no stochastic training procedures. This makes the baseline fully reproducible and eliminates any concern about overfitting the evaluation protocol itself.
 
+The analytic directional probability follows directly from the log-normal return model (Hull, 2018, Ch. 15).
+
 3. **It shares the same evaluation boundary.** GeoBM estimates parameters from the training set (2010-02-02 to 2022-12-30) and is evaluated on the test set (2023-01-03 to 2024-12-30) under the same chronological holdout split as the other two models. Performance comparisons are therefore fair — all three models see the same training data and are assessed on the same held-out period.
 
 ---
@@ -42,7 +44,7 @@ The comparative framework evaluates three paradigms against a common held-out te
 | Model | Assumptions | Inputs used | Prediction mechanism |
 |---|---|---|---|
 | GeoBM | Returns are IID log-normal | Raw returns only (2 parameters) | Analytic probability |
-| GA | Rules over feature thresholds can generate excess returns | 14 engineered features | Evolved trading rules |
+| GA | Rules over feature thresholds can generate excess returns | Engineered feature space | Evolved directional rules |
 | XGBoost | Non-linear feature interactions predict direction | 14 engineered features | Learned decision trees |
 
 GeoBM anchors the bottom of this hierarchy. If the GA or XGBoost fail to exceed the GeoBM baseline, the implication is that the feature-based models have not learned any structure beyond what the unconditional return distribution already captures. If they do exceed it, the margin of improvement quantifies the predictive value of the engineered features and the non-linear modelling capacity.
@@ -91,6 +93,8 @@ Under the GBM discrete approximation, the expected value of the log return is (m
     sigma = log_return_std = 0.01113145
     mu = log_return_mean + 0.5 * sigma^2 = 0.00052419
 
+The recovered drift μ is reported for diagnostic completeness and to verify that the drift correction term is small relative to the log-return mean, but the directional prediction depends only on the compound quantity (μ − 0.5σ²), which is estimated directly as the sample mean of log returns.
+
 All estimates are at daily frequency. No annualisation is applied because the prediction horizon is daily. Annualising and then de-annualising would introduce a redundant pair of multiplications that add no information and risk unit-conversion errors.
 
 ---
@@ -102,7 +106,7 @@ Under GBM, the probability that the next day's log return exceeds zero is:
     P(x_{t+1} > 0) = P(Z > -log_return_mean / sigma)
                     = Phi(log_return_mean / sigma)
 
-where Z is standard normal and Phi is the standard normal CDF. Substituting the estimated values:
+where Z is standard normal and Phi is the standard normal CDF. Since log_return_mean estimates (μ − 0.5σ²) directly, P(x > 0) = Φ((μ − 0.5σ²)/σ) = Φ(log_return_mean / σ). Since log(1 + r) > 0 if and only if r > 0, the event that the log return exceeds zero is identical to the event that the simple return exceeds zero. The directional prediction is therefore fully consistent with the target definition in this project, where the label is defined on simple next-day returns. Substituting the estimated values:
 
     P(x_{t+1} > 0) = Phi(0.00046223 / 0.01113145)
                     = Phi(0.04153)
@@ -111,6 +115,8 @@ where Z is standard normal and Phi is the standard normal CDF. Substituting the 
 The prediction rule is: if P(up) > 0.5, predict 1 (up); otherwise predict 0 (down). Since 0.5166 > 0.5, the model predicts "up" on every test day.
 
 **This is not a bug — it is the central finding.** Under the GBM assumptions, the estimated positive drift implies that the unconditional probability of an up day slightly exceeds 0.5. The model has no mechanism to vary its prediction across days because the IID assumption makes every day identical in expectation. The constant-prediction outcome is a mathematically necessary consequence of positive drift under IID log-normal returns, and it is exactly what makes GeoBM an informative baseline: any model that produces non-trivial variation in its predictions is, by definition, modelling structure that GeoBM cannot represent.
+
+Had the estimated compound drift term been negative, the same rule would have produced a constant "down" prediction instead. This shows that the classifier is conditional on the training-period parameter estimates rather than hard-coded to predict "up."
 
 ---
 
