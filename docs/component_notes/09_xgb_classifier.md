@@ -9,7 +9,7 @@
 
 Trains an XGBoost gradient-boosted tree classifier on the 14 engineered features from the training set, generates predicted probabilities for every day in the held-out test set, and saves comparison-compatible predictions to `results/predictions/xgb_predictions.csv`.
 
-This module is the third and final modelling paradigm in the project's comparative framework. It is the decisive test: XGBoost has non-linear modelling capacity, access to the full 14-feature engineered space, and learned feature interactions — capabilities that neither GeoBM (2 parameters, no features) nor the GA (3 threshold rules, implicit feature selection) possess. If XGBoost cannot exceed the 57.5% majority-class baseline, the conclusion is that daily SPY direction is not predictable from these features by any of the three paradigms under this evaluation protocol — itself evidence for weak-form market efficiency at daily frequency and horizon.
+This module is the third and final modelling paradigm in the project's comparative framework. It is the decisive test: XGBoost has non-linear modelling capacity, access to the full 14-feature engineered space, and learned feature interactions — capabilities that neither GeoBM (2 parameters, no features) nor the GA (3 threshold rules, implicit feature selection) possess. If XGBoost cannot exceed the 57.5% majority-class baseline, the conclusion is that daily SPY direction is not predictable from these features by any of the three paradigms under this evaluation protocol — itself evidence for weak-form market efficiency at daily frequency and horizon. This interpretation carries the standard scope caveat: the evidence applies to this specific asset (SPY), feature set (14 technical indicators), evaluation period (2023–2024), and prediction horizon (next-day binary direction). Generalisation beyond this scope requires additional experiments.
 
 ---
 
@@ -52,8 +52,10 @@ All hyperparameters are read from `config/data_config.yaml` and fixed before tra
 | `learning_rate` | 0.1 | Controls the contribution of each tree. Lower values require more trees but reduce overfitting. 0.1 is the standard default that balances convergence speed with regularisation. |
 | `subsample` | 0.8 | Row sampling per tree. Using 80% of training rows per tree introduces stochastic regularisation that reduces overfitting. |
 | `colsample_bytree` | 0.8 | Feature sampling per tree. Using 80% of features per tree forces the ensemble to be robust to feature subsets and reduces the risk of over-relying on a single feature. |
+| `reg_alpha` | 0 (default) | L1 regularisation on leaf weights. The default of zero means no L1 penalty is applied. Combined with `reg_lambda`, this controls the complexity penalty on individual leaves. |
+| `reg_lambda` | 1 (default) | L2 regularisation on leaf weights. The default of 1 applies a moderate L2 penalty. This is the primary leaf-level regularisation mechanism and was left at its default because explicit tuning was not performed. |
 
-**Why fixed defaults rather than tuning.** Hyperparameter tuning (e.g., grid search with chronological cross-validation) would strengthen the model's test performance and methodological defensibility. However, for this proof-of-concept baseline, fixed conservative defaults are sufficient to answer the comparison question: can XGBoost, even with untuned parameters, beat the majority-class baseline? If it cannot with sensible defaults, the conclusion about feature-set limitations is stronger, not weaker. The overfitting risk is managed through subsample, colsample_bytree, and shallow trees rather than through a tuning procedure.
+**Why fixed defaults rather than tuning.** Hyperparameter tuning (e.g., grid search with chronological cross-validation) would strengthen the model's test performance and methodological defensibility. However, for this proof-of-concept baseline, fixed conservative defaults are sufficient to answer the comparison question: can XGBoost, even with untuned parameters, beat the majority-class baseline? If it cannot with sensible defaults, the conclusion about feature-set limitations is stronger, not weaker. The overfitting risk is managed through subsample, colsample_bytree, and shallow trees rather than through a tuning procedure. The default regularisation parameters (reg_alpha=0, reg_lambda=1) provide moderate L2 leaf-weight penalisation without L1 sparsity. These were not tuned — their defaults are part of the fixed-configuration design.
 
 ---
 
@@ -92,6 +94,8 @@ The importance values range from 0.0626 to 0.0781 — a spread of only 0.0155 ac
 
 The GA converged to MA-ratio features (close_sma20_ratio, close_sma5_ratio). XGBoost's top features include volume_sma20_ratio, momentum, and the same MA ratios — partial overlap, but no strong convergence. The cross-paradigm feature selection is weakly consistent but not conclusive.
 
+Caveat: colsample_bytree effect on importance. The colsample_bytree=0.8 setting means each tree sees only 80% of features, which mechanically flattens gain-based importance — features excluded from a tree cannot accumulate gain in that tree, and the missing gain is redistributed across whichever features happen to be sampled. The near-uniform importance distribution is therefore partially an artefact of the column-sampling regularisation, not solely evidence of uniform signal strength. A model with colsample_bytree=1.0 would produce a less flattened distribution, though likely still without a dominant feature given the low overall signal. This caveat does not change the conclusion — no feature contains strong directional signal — but it qualifies the degree to which the flat distribution can be attributed to the features versus the training procedure.
+
 ---
 
 ## Rejected alternatives
@@ -107,6 +111,10 @@ Early stopping would halt training when validation loss stops improving, reducin
 ### Feature selection before training
 
 Pre-selecting a subset of the 14 features (e.g., via mutual information or univariate tests) could reduce dimensionality and overfitting. This was rejected because: (1) XGBoost performs implicit feature selection via its splitting mechanism; (2) colsample_bytree=0.8 already introduces feature-level regularisation; (3) manual feature pre-selection would impose human bias on the search, inconsistent with the GA comparison where implicit feature selection was the design choice.
+
+### Class-weight balancing or oversampling
+
+XGBoost supports `scale_pos_weight` for class-weight adjustment, and preprocessing techniques such as SMOTE could be applied to oversample the minority class. These were considered and rejected. The class imbalance (55.0% up in training, 57.5% up in test) is mild — it does not approach the extreme ratios (e.g., 95/5) where balancing techniques provide substantial benefit. More importantly, applying class weights would optimise for balanced accuracy rather than plain accuracy, creating an inconsistency with the evaluation metric and the majority-class baseline definition. The GA uses plain accuracy as its fitness function for the same reason. If class-weight balancing were applied and XGBoost then exceeded the baseline in balanced-accuracy terms, the comparison with GeoBM and the GA (which were not rebalanced) would be confounded. The unbalanced configuration keeps the comparison clean.
 
 ---
 

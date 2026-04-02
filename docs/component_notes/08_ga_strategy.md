@@ -9,7 +9,7 @@
 
 Evolves a small set of interpretable threshold rules over the 14 engineered features using DEAP, evaluates the best evolved individual on the held-out test set for next-day directional prediction, and saves comparison-compatible predictions to `results/predictions/ga_predictions.csv`.
 
-This module is the second of three modelling paradigms in the project's comparative framework. Its role is to test whether a bounded evolutionary search over the engineered feature space can discover directional prediction logic that exceeds the GeoBM / majority-class baseline (57.5%) under the same held-out temporal evaluation boundary. The GA operationalises the hypothesis that simple, interpretable threshold rules over technical features contain directional information beyond what the unconditional return distribution provides.
+This module is the second of three modelling paradigms in the project's comparative framework. Its role is to test whether a bounded evolutionary search over the engineered feature space can discover directional prediction logic that exceeds the GeoBM / majority-class baseline (57.5%) under the same held-out temporal evaluation boundary. The GA operationalises the hypothesis that simple, interpretable threshold rules over technical features contain directional information beyond what the unconditional return distribution provides. This test is scoped to one asset (SPY), one feature set (14 technical indicators), one evaluation period (2023–2024), and one representation family (majority-vote threshold rules). The result does not generalise beyond this scope without further experimentation.
 
 ---
 
@@ -88,9 +88,9 @@ Plain accuracy was chosen over balanced accuracy for consistency. The test-set e
 | Selection | Tournament (size 3) | Standard selection pressure for small populations. Larger tournaments risk premature convergence; smaller tournaments slow convergence. |
 | Crossover | Two-point, p=0.7 | Two-point crossover preserves rule-level structure (3 genes per rule) better than uniform crossover. The 0.7 probability is a standard default (De Jong, 2006). |
 | Mutation | Gaussian (mu=0, sigma=0.2, per-gene p=0.2) | Gaussian mutation provides local search around promising regions. Sigma=0.2 relative to the [0, 1] gene range balances exploration and exploitation. |
-| Elitism | Hall of fame (size 1) | The best individual ever found is preserved. eaSimple does not re-insert elites into the population, but the hall of fame ensures the best solution is never lost. |
+| Elitism | Hall of fame (size 1) | The best individual ever found is preserved. eaSimple does not re-insert elites into the population, but the hall of fame ensures the best solution is never lost. This means the population's best fitness can regress between generations — a known property of eaSimple. In practice, the hall of fame mitigates this for the final solution, but it means the evolutionary trajectory is not monotonically improving. For this proof-of-concept, this is acceptable; a production implementation would use eaMuPlusLambda for strict elitism. |
 
-Population size (100) and generation count (50) are proportionate for the 9-dimensional search space. Larger budgets were not justified for a proof-of-concept baseline — the evolution converged by generation 20 in the real run.
+Population size (100) and generation count (50) are proportionate for the 9-dimensional search space. Larger budgets were not justified for a proof-of-concept baseline — the best fitness plateaued near its final value of 55.9% by generation 20, with the exact best individual (0.5587) first appearing at generation 42. The marginal improvement between generation 20 and 42 was less than 0.1pp, confirming that the search had effectively converged well before the generation budget was exhausted. The generation-by-generation fitness trajectory is available in the module's terminal diagnostics.
 
 ---
 

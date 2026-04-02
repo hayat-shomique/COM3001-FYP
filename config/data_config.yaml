@@ -87,3 +87,11 @@ xgboost:
   subsample: 0.8
   colsample_bytree: 0.8
   description: "XGBoost gradient-boosted tree classifier — supervised directional prediction over 14 engineered features"
+
+evaluation:
+  prediction_files:
+    - "results/predictions/geobm_predictions.csv"
+    - "results/predictions/ga_predictions.csv"
+    - "results/predictions/xgb_predictions.csv"
+  summary_path: "results/tables/model_comparison.csv"
+  description: "Common evaluation harness — side-by-side comparison of all three paradigms"
