@@ -65,3 +65,14 @@ geobm:
   test_path: "data/processed/spy_test.csv"
   predictions_path: "results/predictions/geobm_predictions.csv"
   description: "Geometric Brownian Motion directional baseline — analytic one-step-ahead prediction"
+
+genetic:
+  train_path: "data/processed/spy_train.csv"
+  test_path: "data/processed/spy_test.csv"
+  predictions_path: "results/predictions/ga_predictions.csv"
+  n_rules: 3
+  population_size: 100
+  generations: 50
+  crossover_prob: 0.7
+  mutation_prob: 0.2
+  description: "DEAP evolutionary directional baseline — majority-vote threshold rules over engineered features"
