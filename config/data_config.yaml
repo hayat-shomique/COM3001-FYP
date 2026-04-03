@@ -88,6 +88,19 @@ xgboost:
   colsample_bytree: 0.8
   description: "XGBoost gradient-boosted tree classifier — supervised directional prediction over 14 engineered features"
 
+xgboost_v2:
+  train_path: "data/processed/spy_train.csv"
+  test_path: "data/processed/spy_test.csv"
+  predictions_path: "results/predictions/xgb_v2_predictions.csv"
+  validation_end_date: "2020-12-31"
+  subsample: 0.8
+  colsample_bytree: 0.8
+  early_stopping_rounds: 10
+  grid_max_depth: [2, 3, 4]
+  grid_n_estimators: [50, 100, 200]
+  grid_learning_rate: [0.05, 0.1]
+  description: "XGBoost-v2 — validated, early-stopped variant with chronological grid search"
+
 evaluation:
   prediction_files:
     - "results/predictions/geobm_predictions.csv"
