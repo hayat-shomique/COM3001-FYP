@@ -12,3 +12,4 @@ results/*
 .vscode/
 .claude/
 CLAUDE.md
+docs/session_log.md

@@ -21,11 +21,16 @@ Run each module in order using `.venv/bin/python`:
 | 5. Temporal split | `src/splitting/temporal_split.py` | `spy_train.csv` + `spy_test.csv` | 3,252 + 501 |
 | 6. GeoBM baseline | `src/models/geobm/geobm_baseline.py` | `results/predictions/geobm_predictions.csv` | 501 |
 | 7. GA baseline | `src/models/genetic/ga_strategy.py` | `results/predictions/ga_predictions.csv` | 501 |
-| 8. XGBoost classifier | `src/models/xgboost_model/xgb_classifier.py` | `results/predictions/xgb_predictions.csv` | 501 |
-| 9. Evaluation harness | `src/evaluation/evaluate.py` | `results/tables/model_comparison.csv` | — |
-| 10. Figure generation | `src/evaluation/generate_figures.py` | `results/figures/*.pdf` | — |
+| 8. XGBoost-v1 | `src/models/xgboost_model/xgb_classifier.py` | `results/predictions/xgb_predictions.csv` | 501 |
+| 9. XGBoost-v2 | `src/models/xgboost_model/xgb_classifier_v2.py` | `results/predictions/xgb_v2_predictions.csv` | 501 |
+| 10. Evaluation harness | `src/evaluation/evaluate.py` | `results/tables/model_comparison.csv` | — |
+| 11. Figures | `src/evaluation/generate_figures.py` | `results/figures/*.pdf` | — |
+| 12. Feature ablation | `src/evaluation/feature_ablation.py` | `results/tables/feature_ablation.csv` | — |
+| 13. Calibration analysis | `src/evaluation/calibration_analysis.py` | `results/tables/threshold_sweep.csv` | — |
+| 14. Bootstrap CIs | `src/evaluation/bootstrap_ci.py` | `results/tables/bootstrap_ci.csv` | — |
+| 15. Walk-forward | `src/evaluation/walk_forward.py` | `results/tables/walk_forward_results.csv` | — |
 
-Stage 1 requires WRDS credentials. Stages 2–10 run on locally generated CSV files.
+Stage 1 requires WRDS credentials. Stages 2–15 run on locally generated CSV files.
 
 ## Configuration
 
@@ -44,13 +49,24 @@ All paths, parameters, and hyperparameters are read from `config/data_config.yam
 | Majority class | 57.5% | — | — | Constant "up" (100%) |
 | GeoBM | 57.5% | +0.0pp | 0.000 | Constant "up" (100%) |
 | GA | 56.7% | -0.8pp | -0.014 | Near-constant "up" (96.4%) |
-| XGBoost | 53.1% | -4.4pp | -0.037 | Up-biased (80.4%) |
+| XGBoost-v1 | 53.1% | -4.4pp | -0.037 | Up-biased (80.4%) |
+| XGBoost-v2 | 55.7% | -1.8pp | -0.090 | Near-constant "up" (97.4%) |
 
-No model exceeded the naive majority-class baseline. McNemar's test confirms the GeoBM vs XGBoost difference is statistically significant (p=0.034). All MCC values are near zero, indicating no discriminative ability.
+No model exceeded the naive majority-class baseline. XGBoost-v2 reduced the overfitting gap from 18.6pp (v1) to 0.6pp via chronological validation and early stopping, but the null result held. McNemar's test confirms GeoBM vs XGBoost-v1 is statistically significant (p=0.034). Bootstrap 95% CIs are ±4.4pp wide on 501 observations. Walk-forward evaluation across 3 temporal windows (2019–2024) confirms the null result is temporally robust.
+
+## Evaluation evidence
+
+| Analysis | Module | Key finding |
+|---|---|---|
+| Common metrics | `evaluate.py` | No model beats 57.5%; capacity–accuracy inversion |
+| Feature ablation | `feature_ablation.py` | Momentum hurts (+1.4pp when removed); MA ratios help marginally (-0.2pp) |
+| Calibration | `calibration_analysis.py` | Both XGBoost Brier scores worse than naive; no threshold produces meaningful MCC |
+| Bootstrap CIs | `bootstrap_ci.py` | v1 CI at/below baseline; v2 MCC CI entirely below zero |
+| Walk-forward | `walk_forward.py` | Null result holds across 3 windows spanning pre-COVID, peri-COVID, post-COVID |
 
 ## Documentation
 
-Ten component notes in `docs/component_notes/` (01–10) document every pipeline stage with purpose, design justification, rejected alternatives, scope boundaries, rubric mapping, and exact evidence from real runs.
+Fifteen component notes in `docs/component_notes/` (01–15) document every pipeline stage with purpose, design justification, rejected alternatives, scope boundaries, rubric mapping, and exact evidence from real runs.
 
 ## Dependencies
 

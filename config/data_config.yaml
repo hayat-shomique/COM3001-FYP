@@ -102,6 +102,8 @@ xgboost_v2:
   description: "XGBoost-v2 — validated, early-stopped variant with chronological grid search"
 
 evaluation:
+  # Evaluates original 3 paradigms. XGBoost-v2 analysed by dedicated modules
+  # (xgb_classifier_v2.py, feature_ablation.py, calibration_analysis.py).
   prediction_files:
     - "results/predictions/geobm_predictions.csv"
     - "results/predictions/ga_predictions.csv"

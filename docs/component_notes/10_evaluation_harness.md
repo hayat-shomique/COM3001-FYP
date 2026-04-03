@@ -73,7 +73,7 @@ All three models have balanced accuracy at or below 50.0%. This is the critical 
 
 | Pair | Chi-squared | p-value | Significant? |
 |---|---|---|---|
-| GeoBM vs GA | 0.500 | 0.480 | No |
+| GeoBM vs GA | 0.500 | 0.4795 | No |
 | GeoBM vs XGBoost | 4.500 | 0.034 | **Yes** |
 | GA vs XGBoost | 3.141 | 0.076 | No |
 
@@ -152,6 +152,6 @@ This finding is consistent with the weak-form efficient market hypothesis (Fama,
 | Confusion: FP | 213 | 206 | 175 |
 | Confusion: FN | 0 | 11 | 60 |
 
-McNemar's tests: GeoBM vs GA p=0.480 (NS), GeoBM vs XGBoost p=0.034 (significant), GA vs XGBoost p=0.076 (NS).
+McNemar's tests: GeoBM vs GA p=0.4795 (NS), GeoBM vs XGBoost p=0.034 (significant), GA vs XGBoost p=0.076 (NS).
 
 Output saved to `results/tables/model_comparison.csv`.
