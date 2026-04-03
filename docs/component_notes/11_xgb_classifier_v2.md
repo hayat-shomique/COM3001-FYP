@@ -74,6 +74,8 @@ Three observations from the grid:
 
 1. **Early stopping is aggressive.** The best configuration used only 17 of 50 allowed trees. Most configurations were stopped within 3–22 rounds. The model self-regulates heavily because validation loss deteriorates quickly after a few trees — the features contain very little learnable signal.
 
+The validation MCC values are uniformly low (0.00 to 0.10), confirming that even the best-performing configuration on validation data has negligible discriminative ability. The "best" configuration is best only in relative terms — it is still close to random in absolute terms.
+
 2. **Depth 2 wins.** The shallowest trees outperform depths 3 and 4. Deeper trees overfit faster and are stopped earlier. This confirms that the optimal model complexity for this feature set is very low.
 
 3. **n_estimators is irrelevant.** Due to early stopping, configurations with 50, 100, and 200 maximum trees produce identical results at the same depth and learning rate. The model never reaches the upper bound.
@@ -109,6 +111,8 @@ Three observations from the grid:
 **V2 converged toward a near-constant "up" predictor** (97.4% up), similar to GeoBM and the GA. As the model's capacity is constrained to match the signal level, it defaults to the prior distribution — predicting "up" on almost every day. This is the same behaviour observed across all three paradigms, reinforcing the conclusion that the features do not contain reliable directional signal.
 
 **MCC worsened** (-0.037 → -0.090). This is because v2 predicts "down" on only 13 days (vs v1's 98), and those 13 deviations from "predict up" are mostly wrong. The few non-majority predictions actively hurt MCC.
+
+The convergence of v2 toward near-constant "up" prediction (97.4%) mirrors the behaviour of GeoBM (100%) and the GA (96.4%). This cross-paradigm convergence is the project's most revealing pattern: as each model's effective capacity is reduced to match the available signal — whether by mathematical structure (GeoBM), representational constraint (GA), or regularisation (XGBoost-v2) — all three default to the same strategy. The majority class is the attractor in a low-signal environment.
 
 ---
 
@@ -156,6 +160,8 @@ After selecting the best configuration on validation data, the final model is re
 > *Ready-to-lift wording (methodology):* "To address the 18.6 percentage point overfitting gap observed in XGBoost-v1, a validated variant (v2) was implemented with chronological hyperparameter selection and early stopping. The training set (3,252 rows) was split chronologically into a fitting portion (2,749 rows, 2010–2020) and a validation portion (503 rows, 2021–2022). A grid search over 18 hyperparameter combinations — max_depth in {2, 3, 4}, n_estimators in {50, 100, 200}, learning_rate in {0.05, 0.1} — was conducted with early stopping on validation logloss (patience = 10 rounds). The configuration with the highest validation accuracy (max_depth=2, 17 trees early-stopped from 50, learning_rate=0.1) was selected and retrained on the full training set before evaluation on the held-out test set. This design ensures that no test data entered the tuning process, and that the validation set is always temporally posterior to the fitting set."
 
 **Evaluation chapter, "v1-vs-v2 Comparison" paragraph (~300 words).**
+
+**Relationship to v1.** The v1-vs-v2 comparison is not about which model is "better." Both fail to beat the baseline. The comparison demonstrates that the null result is robust to the most common methodological objection (insufficient tuning) and reveals the ceiling imposed by the feature set's information content. This is the kind of controlled refinement that distinguishes a first-class evaluation from a first-pass observation.
 
 > *Ready-to-lift wording (evaluation):* "XGBoost-v2 reduced the overfitting gap from 18.6pp (v1: 71.7% training, 53.1% test) to 0.6pp (v2: 56.3% training, 55.7% test), confirming that v1's poor test accuracy was partly attributable to overfitting. However, v2 still did not exceed the majority-class baseline of 57.5%, falling short by 1.8pp. This is the strongest evidence in the comparative framework for the null result: even with disciplined hyperparameter selection, chronological validation, and early stopping, the supervised learner could not extract directional signal from the 14 engineered features sufficient to outperform naive class-frequency prediction. The early stopping behaviour is itself diagnostic: the best configuration used only 17 of 50 allowed trees, indicating that the feature set's information content is exhausted after very few boosting rounds. As model capacity was constrained to match the signal level, v2 converged toward a near-constant 'up' predictor (97.4% up), the same behaviour observed in GeoBM and the GA — further evidence that the features do not contain reliable directional structure for this asset at daily frequency."
 
