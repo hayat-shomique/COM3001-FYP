@@ -366,21 +366,19 @@ def main():
     logging.info("-" * 50)
     logging.info("PREDICTION DIVERSITY")
 
-    # Pairwise and full agreement
+    # Pairwise agreement
     preds = {name: predictions[name]["predicted"].values for name in model_names}
-    if len(model_names) == 3:
-        a, b, c = model_names
-        all_agree = int(((preds[a] == preds[b]) & (preds[b] == preds[c])).sum())
-        targets = predictions[a]["target"].values
-        all_agree_correct = int(
-            ((preds[a] == preds[b]) & (preds[b] == preds[c]) &
-             (preds[a] == targets)).sum()
-        )
-        all_agree_wrong = all_agree - all_agree_correct
-        logging.info(f"  All 3 agree:         {all_agree}/{n_test} "
-                     f"({100 * all_agree / n_test:.1f}%)")
-        logging.info(f"    ...and correct:    {all_agree_correct}")
-        logging.info(f"    ...and wrong:      {all_agree_wrong}")
+    targets = ref["target"].values
+
+    # All-agree check (works for any number of models)
+    all_pred_arrays = np.column_stack([preds[n] for n in model_names])
+    all_agree_mask = np.all(all_pred_arrays == all_pred_arrays[:, :1], axis=1)
+    all_agree = int(all_agree_mask.sum())
+    all_agree_correct = int((all_agree_mask & (preds[model_names[0]] == targets)).sum())
+    logging.info(f"  All {len(model_names)} agree:      {all_agree}/{n_test} "
+                 f"({100 * all_agree / n_test:.1f}%)")
+    logging.info(f"    ...and correct:    {all_agree_correct}")
+    logging.info(f"    ...and wrong:      {all_agree - all_agree_correct}")
 
     for i in range(len(model_names)):
         for j in range(i + 1, len(model_names)):

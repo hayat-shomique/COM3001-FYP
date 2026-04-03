@@ -89,9 +89,9 @@ def fig_accuracy_comparison(predictions: dict, majority_baseline: float):
         acc = (df["predicted"] == df["target"]).mean()
         accuracies.append(acc * 100)
 
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    fig, ax = plt.subplots(figsize=(9, 4.5))
 
-    colours = ["#4878CF", "#6ACC65", "#D65F5F"]
+    colours = ["#4878CF", "#6ACC65", "#D65F5F", "#E5A03A"][:len(models)]
     bars = ax.bar(models, accuracies, color=colours, width=0.5,
                   edgecolor="black", linewidth=0.5)
 
@@ -103,19 +103,24 @@ def fig_accuracy_comparison(predictions: dict, majority_baseline: float):
     for bar, acc in zip(bars, accuracies):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.3,
                 f"{acc:.1f}%", ha="center", va="bottom", fontweight="bold",
-                fontsize=11)
+                fontsize=10)
 
     ax.set_ylabel("Test Accuracy (%)")
-    ax.set_title("Three-Paradigm Directional Accuracy Comparison")
+    ax.set_title("Four-Model Directional Accuracy Comparison")
     ax.set_ylim(45, 65)
     ax.legend(loc="upper right")
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
 
     # Rename x-ticks for clarity
+    tick_labels = {
+        "geobm": "GeoBM\n(stochastic)",
+        "ga": "GA\n(evolutionary)",
+        "xgboost": "XGBoost-v1\n(fixed defaults)",
+        "xgboost_v2": "XGBoost-v2\n(validated)",
+    }
     ax.set_xticks(range(len(models)))
-    ax.set_xticklabels(["GeoBM\n(stochastic)", "GA\n(evolutionary)",
-                        "XGBoost\n(supervised)"])
+    ax.set_xticklabels([tick_labels.get(m, m) for m in models])
 
     path = FIGURE_DIR / "accuracy_comparison.pdf"
     fig.savefig(path)
@@ -128,14 +133,18 @@ def fig_accuracy_comparison(predictions: dict, majority_baseline: float):
 # ---------------------------------------------------------------------------
 
 def fig_confusion_matrices(predictions: dict):
-    """Side-by-side confusion matrices for all 3 models."""
+    """Side-by-side confusion matrices for all models."""
     models = list(predictions.keys())
-    fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+    n_models = len(models)
+    fig, axes = plt.subplots(1, n_models, figsize=(4.5 * n_models, 4))
+    if n_models == 1:
+        axes = [axes]
 
     titles = {
         "geobm": "GeoBM (57.5%)",
         "ga": "GA (56.7%)",
-        "xgboost": "XGBoost (53.1%)",
+        "xgboost": "XGBoost-v1 (53.1%)",
+        "xgboost_v2": "XGBoost-v2 (55.7%)",
     }
 
     for i, name in enumerate(models):
@@ -158,7 +167,7 @@ def fig_confusion_matrices(predictions: dict):
         axes[i].set_ylabel("Actual" if i == 0 else "")
         axes[i].set_xlabel("Predicted")
 
-    fig.suptitle("Confusion Matrices — Held-Out Test Set (501 days)",
+    fig.suptitle(f"Confusion Matrices — Held-Out Test Set (501 days, {n_models} models)",
                  fontweight="bold", fontsize=13, y=1.02)
     fig.tight_layout()
 
@@ -195,7 +204,7 @@ def fig_balanced_vs_accuracy(predictions: dict, majority_baseline: float):
     x = np.arange(len(models))
     width = 0.3
 
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    fig, ax = plt.subplots(figsize=(9, 4.5))
     bars1 = ax.bar(x - width / 2, accs, width, label="Accuracy",
                    color="#4878CF", edgecolor="black", linewidth=0.5)
     bars2 = ax.bar(x + width / 2, bal_accs, width, label="Balanced Accuracy",
@@ -216,7 +225,9 @@ def fig_balanced_vs_accuracy(predictions: dict, majority_baseline: float):
     ax.set_ylabel("Metric (%)")
     ax.set_title("Accuracy vs Balanced Accuracy — Class Imbalance Exposure")
     ax.set_xticks(x)
-    ax.set_xticklabels(["GeoBM", "GA", "XGBoost"])
+    bal_labels = {"geobm": "GeoBM", "ga": "GA", "xgboost": "XGB-v1",
+                   "xgboost_v2": "XGB-v2"}
+    ax.set_xticklabels([bal_labels.get(m, m) for m in models])
     ax.set_ylim(40, 65)
     ax.legend(loc="upper right", fontsize=9)
     ax.spines["top"].set_visible(False)
@@ -317,21 +328,32 @@ def fig_xgb_feature_importance(config: dict):
 # ---------------------------------------------------------------------------
 
 def fig_capacity_inversion():
-    """Simple plot showing the capacity–accuracy inversion pattern."""
-    models = ["GeoBM\n(2 params)", "GA\n(9 genes)", "XGBoost\n(100 trees)"]
-    accuracies = [57.5, 56.7, 53.1]
-    capacity = [1, 2, 3]
+    """Plot showing the capacity–accuracy inversion with v2 recovery."""
+    models = ["GeoBM\n(2 params)", "GA\n(9 genes)",
+              "XGB-v2\n(17 trees×d2)", "XGB-v1\n(100 trees×d3)"]
+    accuracies = [57.5, 56.7, 55.7, 53.1]
+    capacity = [1, 2, 3, 4]
 
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.plot(capacity, accuracies, "o-", color="#D65F5F", linewidth=2,
-            markersize=10, markerfacecolor="white", markeredgewidth=2)
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+
+    # Main inversion line (GeoBM → GA → XGB-v1)
+    ax.plot([1, 2, 4], [57.5, 56.7, 53.1], "o-", color="#D65F5F",
+            linewidth=2, markersize=10, markerfacecolor="white",
+            markeredgewidth=2, label="Original 3 paradigms", zorder=3)
+
+    # v2 as regularisation recovery point
+    ax.plot(3, 55.7, "s", color="#E5A03A", markersize=12,
+            markeredgecolor="black", markeredgewidth=1.5,
+            label="XGB-v2 (early-stopped)", zorder=4)
+    ax.plot([2, 3, 4], [56.7, 55.7, 53.1], "--", color="#888888",
+            linewidth=1, zorder=2)
 
     ax.axhline(y=57.5, color="black", linestyle="--", linewidth=1,
                label="Majority baseline (57.5%)")
 
-    for i, (cap, acc) in enumerate(zip(capacity, accuracies)):
+    for cap, acc in zip(capacity, accuracies):
         ax.annotate(f"{acc:.1f}%", (cap, acc), textcoords="offset points",
-                    xytext=(0, 12), ha="center", fontweight="bold", fontsize=11)
+                    xytext=(0, 12), ha="center", fontweight="bold", fontsize=10)
 
     ax.set_xticks(capacity)
     ax.set_xticklabels(models)
